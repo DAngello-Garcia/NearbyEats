@@ -10,6 +10,7 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 public class Schedule implements Serializable {
+
     private String weekday;
     private String openingTime;
     private String closingTime;

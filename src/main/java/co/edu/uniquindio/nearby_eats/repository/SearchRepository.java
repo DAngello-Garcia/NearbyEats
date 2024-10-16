@@ -11,5 +11,4 @@ public interface SearchRepository extends MongoRepository<Search, String> {
 
     List<Search> findAllByUser(String userId);
 
-    Boolean existsByUser(String userId);
 }

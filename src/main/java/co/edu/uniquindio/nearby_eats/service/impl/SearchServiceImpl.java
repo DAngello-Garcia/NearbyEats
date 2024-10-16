@@ -2,6 +2,8 @@ package co.edu.uniquindio.nearby_eats.service.impl;
 
 import co.edu.uniquindio.nearby_eats.dto.SaveSearchDTO;
 import co.edu.uniquindio.nearby_eats.dto.response.place.PlaceResponseDTO;
+import co.edu.uniquindio.nearby_eats.exceptions.place.RecommendPlacesException;
+import co.edu.uniquindio.nearby_eats.exceptions.user.GetUserException;
 import co.edu.uniquindio.nearby_eats.model.docs.Place;
 import co.edu.uniquindio.nearby_eats.model.docs.Search;
 import co.edu.uniquindio.nearby_eats.model.enums.PlaceCategory;
@@ -12,7 +14,6 @@ import co.edu.uniquindio.nearby_eats.service.interfa.SearchService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -39,25 +40,22 @@ public class SearchServiceImpl implements SearchService {
                 .query(saveSearchDTO.query())
                 .build();
 
-        Search saveSearch = searchRepository.save(search);
+        searchRepository.save(search);
     }
 
     @Override
-    public List<PlaceResponseDTO> recommendPlaces(String userId) throws Exception {
+    public List<PlaceResponseDTO> recommendPlaces(String userId) throws RecommendPlacesException, GetUserException {
 
-        // Verificar si el usuario existe
         if (! userRepository.existsById(userId)) {
-            throw new Exception("User not found");
+            throw new GetUserException("El usuario no existe");
         }
 
-        // Verificar si el usuario ha realizado búsquedas
         List<Search> searches = searchRepository.findAllByUser(userId);
 
         if (searches.isEmpty()) {
-            throw new Exception("User has not made any searches");
+            throw new RecommendPlacesException("El usuario no tiene búsquedas realizadas");
         }
 
-        // Extraer palabras clave
         List<String> keywords = searches.stream()
                 .map(Search::getQuery)
                 .flatMap(query -> Stream.of(query.split("\\s+")))
@@ -69,13 +67,11 @@ public class SearchServiceImpl implements SearchService {
                 .filter(java.util.Objects::nonNull)
                 .toList();
 
-        // Buscar lugares por categoría o nombre
         List<Place> places = placeRepository.findAllByCategoriesContaining(categoriesToSearch);
 
-        // Mapear a DTO
         return places.stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private PlaceResponseDTO mapToDTO(Place place) {

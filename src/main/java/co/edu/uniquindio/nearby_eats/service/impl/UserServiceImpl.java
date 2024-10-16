@@ -2,7 +2,6 @@ package co.edu.uniquindio.nearby_eats.service.impl;
 
 import co.edu.uniquindio.nearby_eats.dto.email.EmailDTO;
 import co.edu.uniquindio.nearby_eats.dto.request.user.UserChangePasswordDTO;
-import co.edu.uniquindio.nearby_eats.dto.request.user.UserLoginDTO;
 import co.edu.uniquindio.nearby_eats.dto.request.user.UserRegistrationDTO;
 import co.edu.uniquindio.nearby_eats.dto.request.user.UserUpdateDTO;
 import co.edu.uniquindio.nearby_eats.dto.response.user.UserInformationDTO;
@@ -23,12 +22,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -37,7 +38,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final EmailService emailService;
-    private Set<String> forbiddenNickName = new HashSet<>();
+    private final Set<String> forbiddenNickName = new HashSet<>();
     private final JwtUtils jwtUtils;
 
     public UserServiceImpl(UserRepository userRepository, EmailService emailService, JwtUtils jwtUtils) {
@@ -48,20 +49,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String register(UserRegistrationDTO userRegistrationDTO) throws UserRegistrationException {
+    public void register(UserRegistrationDTO userRegistrationDTO) throws UserRegistrationException {
 
         if (existEmail(userRegistrationDTO.email())) {
-            throw new UserRegistrationException("Email already exists");
+            throw new UserRegistrationException("El email ya existe");
         }
 
         if (existNickName(userRegistrationDTO.nickname())) {
-            throw new UserRegistrationException("Nickname already exists");
+            throw new UserRegistrationException("El nickname ya existe");
         }
 
-        if(isForbiddenNickName(userRegistrationDTO.nickname()))
+        if (isForbiddenNickName(userRegistrationDTO.nickname()))
             throw new UserRegistrationException("El nickname es inválido");
 
-        if(!userRegistrationDTO.password().equals(userRegistrationDTO.confirmPassword()))
+        if (!userRegistrationDTO.password().equals(userRegistrationDTO.confirmPassword()))
             throw new UserRegistrationException("Las contraseñas deben ser iguales");
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -79,8 +80,7 @@ public class UserServiceImpl implements UserService {
                 .role(UserRole.CLIENT.name())
                 .build();
 
-        User saved = userRepository.save(user);
-        return saved.getId();
+        userRepository.save(user);
     }
 
     @Override
@@ -89,12 +89,12 @@ public class UserServiceImpl implements UserService {
         String userId = jws.getPayload().get("id").toString();
         Optional<User> userOptional = userRepository.findById(userId);
 
-        if (userOptional.isEmpty()){
-            throw new UpdateAccountException("El id no puede estar vacio para poder actualizar el cliente");
+        if (userOptional.isEmpty()) {
+            throw new UpdateAccountException("El id no puede estar vacío para poder actualizar el cliente");
         }
 
-        if(!userOptional.get().getEmail().equals(userUpdateDTO.email())) {
-            if(existEmail(userUpdateDTO.email()))
+        if (!userOptional.get().getEmail().equals(userUpdateDTO.email())) {
+            if (existEmail(userUpdateDTO.email()))
                 throw new UpdateAccountException("El email ya existe en la base de datos");
         }
 
@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
         String userId = jws.getPayload().get("id").toString();
         Optional<User> userOptional = userRepository.findById(userId);
 
-        if (userOptional.isEmpty()){
+        if (userOptional.isEmpty()) {
             throw new DeleteAccountException("El id del cliente a eliminar no puede ser vacío");
         }
 
@@ -129,7 +129,7 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAllByIsActiveAndRole(true, "CLIENT");
         return users.stream()
                 .map(this::convertToUserInformationDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 
@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOptional = userRepository.findById(id);
 
         if (userOptional.isEmpty()) {
-            throw new GetUserException("id is empty");
+            throw new GetUserException("El id no puede ser vacío");
         }
 
         User user = userOptional.get();
@@ -167,19 +167,19 @@ public class UserServiceImpl implements UserService {
 
         emailService.sendEmail(new EmailDTO("Cambio de contraseña de NearbyEats",
                 "Para cambiar la contraseña ingrese al siguiente enlace " +
-                        "http://localhost:4200/cambiar-contrasenia/"+token, email));
-
+                        "http://localhost:4200/cambiar-contrasenia/" + token, email));
     }
+    // TODO: verificar url
 
     @Override
     public void changePassword(UserChangePasswordDTO userChangePasswordDTO) throws ChangePasswordException {
 
         Jws<Claims> jws = jwtUtils.parseJwt(userChangePasswordDTO.recoveryToken());
         String userEmail = jws.getPayload().get("sub").toString();
-        Optional<User> userOptional = userRepository.findByemail(userEmail);
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
 
         if (userOptional.isEmpty()) {
-            throw new ChangePasswordException("id user is empty");
+            throw new ChangePasswordException("El id no puede ser vacío");
         }
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String encryptedPassword = passwordEncoder.encode(userChangePasswordDTO.newPassword());
@@ -202,7 +202,7 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    public boolean existEmail(String email){
+    public boolean existEmail(String email) {
         return userRepository.findByEmail(email).isPresent();
     }
 
@@ -223,6 +223,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public boolean isForbiddenNickName (String nickName) {return forbiddenNickName.contains(nickName.trim().toLowerCase());}
+    public boolean isForbiddenNickName(String nickName) {
+        return forbiddenNickName.contains(nickName.trim().toLowerCase());
+    }
 
 }

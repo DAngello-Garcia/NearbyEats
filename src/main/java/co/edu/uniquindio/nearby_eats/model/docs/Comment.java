@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @ToString
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Comment implements Serializable {
 
@@ -23,14 +23,9 @@ public class Comment implements Serializable {
     private String id;
 
     private String text;
-
     private String user;
-
     private String place;
-
     private String date;
-
     private int rating;
-
     private Reply reply;
 }

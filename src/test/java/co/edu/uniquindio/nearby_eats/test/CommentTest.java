@@ -30,16 +30,16 @@ public class CommentTest {
     private final String userId = "client2";
 
     @Test
-    public void createCommentTest() throws CreateCommentException, MessagingException, EmailServiceException {
+    public void createCommentTest() throws CreateCommentException, MessagingException, EmailServiceException, GetAverageScoreCommentException {
         CommentDTO commentDTO = new CommentDTO(placeId, "Excelente lugar", 5);
-        Comment comment = commentService.createComment(commentDTO, userId);
+        String comment = commentService.createComment(commentDTO, userId);
         Assertions.assertNotNull(comment);
     }
 
     @Test
     public void answerCommentTest() throws AnswerCommentException, MessagingException, EmailServiceException {
         ReplyDTO replyDTO = new ReplyDTO( "respuesta", "comment1");
-        Comment comment = commentService.answerComment(replyDTO, userId);
+        String comment = commentService.answerComment(replyDTO, userId);
         Assertions.assertNotNull(comment);
     }
 

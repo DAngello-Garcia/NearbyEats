@@ -12,6 +12,6 @@ import java.util.List;
 @Setter
 public class Location implements Serializable {
 
-    private String type; // Point
-    private List<Double> coordinates; // [longitude, latitude]
+    private String type;
+    private List<Double> coordinates;
 }

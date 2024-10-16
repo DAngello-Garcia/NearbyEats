@@ -60,7 +60,7 @@ public class PlaceTest {
                 userId
         );
 
-        Place createPlace = placeService.createPlace(placeCreateDTO);
+        PlaceResponseDTO createPlace = placeService.createPlace(placeCreateDTO);
         Assertions.assertNotNull(createPlace);
     }
 
@@ -80,7 +80,7 @@ public class PlaceTest {
                 oldPlace.getId()
         );
 
-        Place place = placeService.updatePlace(updatePlaceDTO);
+        PlaceResponseDTO place = placeService.updatePlace(updatePlaceDTO);
         Assertions.assertNotNull(place);
     }
 
@@ -92,7 +92,7 @@ public class PlaceTest {
                 userId
         );
 
-        Place place = placeService.deletePlace(deletePlaceDTO);
+        PlaceResponseDTO place = placeService.deletePlace(deletePlaceDTO);
         Assertions.assertNotNull(place);
     }
 
@@ -100,28 +100,25 @@ public class PlaceTest {
     public void getPlaceTest() throws GetPlaceException {
         Optional<Place> placeOptional = placeRepository.findById(placeId);
         PlaceResponseDTO placeResponseDTO = placeService.getPlace(placeId);
-        System.out.println(placeResponseDTO);
 
         Assertions.assertNotNull(placeOptional);
     }
 
     @Test
-    public void getPlacesByCategory() throws GetPlaceException {
+    public void getPlacesByCategory() throws GetPlaceException, SaveSearchException {
         String placeCategory = "HOTEL";
         List<PlaceResponseDTO> place = placeService.getPlacesByCategory(new GetPlacesByCategoryDTO(placeCategory), userId);
-        System.out.println(place);
 
         Assertions.assertNotNull(placeCategory);
     }
 
     @Test
-    public void getPlacesByStatusTest() throws GetPlaceException {
+    public void getPlacesByStatusTest() throws GetPlaceException, SaveSearchException {
         GetPlacesByStatusByClientDTO getPlacesByStatusByClientDTO = new GetPlacesByStatusByClientDTO(
                 "PENDING"
         );
 
         List<PlaceResponseDTO> placeResponseDTOS = placeService.getPlacesByStatus(getPlacesByStatusByClientDTO, userId);
-        System.out.println(placeResponseDTOS);
 
         Assertions.assertNotNull(getPlacesByStatusByClientDTO);
     }
@@ -129,7 +126,6 @@ public class PlaceTest {
     @Test
     public void getPlacesByClientIdTest() throws GetPlaceException {
         List<PlaceResponseDTO> placeResponseDTOS = placeService.getPlacesByClientId(userId);
-        System.out.println(placeResponseDTOS);
 
         Assertions.assertNotNull(placeResponseDTOS);
     }
@@ -152,7 +148,6 @@ public class PlaceTest {
     public void getPlaceByNameTest() throws GetPlaceException {
         GetPlacesByNameDTO getPlacesByNameDTO = new GetPlacesByNameDTO("Exito");
         List<PlaceResponseDTO> placeResponseDTOS = placeService.getPlacesByName(getPlacesByNameDTO, userId);
-        System.out.println(placeResponseDTOS);
 
         Assertions.assertNotNull(placeResponseDTOS);
     }
@@ -164,18 +159,14 @@ public class PlaceTest {
                 placeId
         );
 
-        Place place = placeService.saveFavoritePlace(placeId, userId);
-        System.out.println(place);
+        PlaceResponseDTO place = placeService.saveFavoritePlace(placeId, userId);
         Assertions.assertNotNull(place);
     }
 
     //Revisión
     @Test
     public void deleteFavortitePlace() throws FavoritePlaceException {
-
-
-        Place place = placeService.deleteFavoritePlace(placeId, userId);
-        System.out.println(place);
+        PlaceResponseDTO place = placeService.deleteFavoritePlace(placeId, userId);
         Assertions.assertNotNull(place);
     }
 
@@ -203,6 +194,5 @@ public class PlaceTest {
         // Verificación
         Assertions.assertNotNull(recommendedPlaces);
     }
-
 
 }

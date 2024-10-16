@@ -11,7 +11,6 @@ import co.edu.uniquindio.nearby_eats.exceptions.email.EmailServiceException;
 import co.edu.uniquindio.nearby_eats.model.docs.Comment;
 import co.edu.uniquindio.nearby_eats.model.docs.Place;
 import co.edu.uniquindio.nearby_eats.model.docs.User;
-import co.edu.uniquindio.nearby_eats.model.enums.PlaceStatus;
 import co.edu.uniquindio.nearby_eats.model.subdocs.Reply;
 import co.edu.uniquindio.nearby_eats.repository.CommentRepository;
 import co.edu.uniquindio.nearby_eats.repository.PlaceRepository;
@@ -22,6 +21,7 @@ import co.edu.uniquindio.nearby_eats.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import jakarta.mail.MessagingException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +31,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
@@ -39,19 +40,10 @@ public class CommentServiceImpl implements CommentService {
     private final EmailService emailService;
     private final JwtUtils jwtUtils;
 
-    public CommentServiceImpl(CommentRepository commentRepository, PlaceRepository placeRepository, UserRepository userRepository, EmailService emailService, JwtUtils jwtUtils) {
-        this.commentRepository = commentRepository;
-        this.placeRepository = placeRepository;
-        this.userRepository = userRepository;
-        this.emailService = emailService;
-        this.jwtUtils = jwtUtils;
-    }
-
     @Override
-    public Comment createComment(CommentDTO commentDTO, String token) throws CreateCommentException, MessagingException, EmailServiceException, GetAverageScoreCommentException {
+    public String createComment(CommentDTO commentDTO, String token) throws CreateCommentException, MessagingException, EmailServiceException, GetAverageScoreCommentException {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String userId = jws.getPayload().get("id").toString();
-        System.out.println(commentDTO.placeId());
 
         Optional<Place> placeOptional = placeRepository.findById(commentDTO.placeId());
         if (placeOptional.isEmpty()) {
@@ -92,15 +84,15 @@ public class CommentServiceImpl implements CommentService {
         place.setScore(score);
         placeRepository.save(place);
 
-        Optional<User> ownerOptional = userRepository.findById(placeOptional.get().getCreatedBy());
+        Optional<User> ownerOptional = userRepository.findById(place.getCreatedBy());
         User owner = ownerOptional.get();
-        emailService.sendEmail(new EmailDTO("Nuevo comentario en "+placeOptional.get().getName(),
+        emailService.sendEmail(new EmailDTO("Nuevo comentario en "+place.getName(),
                 "Para responder el comentario, ingrese al siguiente enlace:  http://localhost:4200/detalle-negocio/" + place.getId(), owner.getEmail()));
-        return comment1;
+        return comment1.getId();
     }
 
     @Override
-    public Comment answerComment(ReplyDTO replyDTO, String token) throws AnswerCommentException, MessagingException, EmailServiceException {
+    public String answerComment(ReplyDTO replyDTO, String token) throws AnswerCommentException, MessagingException, EmailServiceException {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String userId = jws.getPayload().get("id").toString();
 
@@ -125,14 +117,14 @@ public class CommentServiceImpl implements CommentService {
                 .text(replyDTO.text())
                 .date(LocalDateTime.now().toString())
                 .respondedBy(userId)
-                        .build();
+                .build();
 
         comment.setReply(reply);
         Comment comment1 = commentRepository.save(comment);
         Optional<User> user = userRepository.findById(comment.getUser());
         emailService.sendEmail(new EmailDTO("Nuevo comentario en "+place.get().getName(),
                 "Su comentario ha sido respondido: http://localhost:4200/detalle-negocio/" + place.get().getId(), user.get().getEmail()));
-        return comment1;
+        return comment1.getId();
     }
 
     @Override
@@ -172,7 +164,7 @@ public class CommentServiceImpl implements CommentService {
                 comment.getText(),
                 comment.getRating(),
                 comment.getReply() != null ? new ReplyResponseDTO(
-                        comment.getReply().getDate().toString(),
+                        comment.getReply().getDate(),
                         comment.getReply().getRespondedBy(),
                         comment.getReply().getText()
                 ) : null

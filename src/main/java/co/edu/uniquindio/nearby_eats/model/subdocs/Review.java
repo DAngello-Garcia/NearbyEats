@@ -10,6 +10,7 @@ import java.io.Serializable;
 @Setter
 @Builder
 public class Review implements Serializable {
+
     private String moderatorId;
     private String date;
     private String action;

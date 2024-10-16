@@ -10,7 +10,6 @@ import co.edu.uniquindio.nearby_eats.exceptions.place.*;
 import co.edu.uniquindio.nearby_eats.exceptions.review.ReviewPlaceException;
 import co.edu.uniquindio.nearby_eats.model.docs.Place;
 import co.edu.uniquindio.nearby_eats.model.docs.User;
-import co.edu.uniquindio.nearby_eats.model.enums.PlaceCategory;
 import co.edu.uniquindio.nearby_eats.model.enums.PlaceStatus;
 import co.edu.uniquindio.nearby_eats.model.subdocs.Review;
 import co.edu.uniquindio.nearby_eats.model.subdocs.Schedule;
@@ -32,11 +31,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.chrono.ChronoLocalDateTime;
 import java.util.*;
 
 @Service
@@ -67,7 +64,7 @@ public class PlaceServiceImpl implements PlaceService {
     }
 
     @Override
-    public Place createPlace(PlaceCreateDTO placeCreateDTO) throws CreatePlaceException {
+    public PlaceResponseDTO createPlace(PlaceCreateDTO placeCreateDTO) throws CreatePlaceException {
 
         if (placeRepository.existsByName(placeCreateDTO.name())) {
             throw new CreatePlaceException("Ya existe un lugar con ese nombre");
@@ -98,7 +95,7 @@ public class PlaceServiceImpl implements PlaceService {
         Place savedPlace = placeRepository.save(place);
         user.getCreatedPlaces().add(savedPlace.getId());
         userRepository.save(user);
-        return savedPlace;
+        return convertToPlaceResponseDTO(savedPlace);
     }
 
     private boolean isBannedName(String name) {
@@ -106,7 +103,7 @@ public class PlaceServiceImpl implements PlaceService {
     }
 
     @Override
-    public Place updatePlace(UpdatePlaceDTO updatePlaceDTO) throws UpdatePlaceException {
+    public PlaceResponseDTO updatePlace(UpdatePlaceDTO updatePlaceDTO) throws UpdatePlaceException {
         Optional<Place> placeOptional = placeRepository.findById(updatePlaceDTO.placeId());
 
         if (placeOptional.isEmpty() || placeOptional.get().getStatus().equals(PlaceStatus.DELETED.name())) {
@@ -126,11 +123,12 @@ public class PlaceServiceImpl implements PlaceService {
         updatedPlace.setPhones(updatePlaceDTO.phones());
         updatedPlace.setCategories(updatePlaceDTO.categories());
 
-        return placeRepository.save(updatedPlace);
+        placeRepository.save(updatedPlace);
+        return convertToPlaceResponseDTO(updatedPlace);
     }
 
     @Override
-    public Place deletePlace(DeletePlaceDTO deletePlaceDTO) throws DeletePlaceException {
+    public PlaceResponseDTO deletePlace(DeletePlaceDTO deletePlaceDTO) throws DeletePlaceException {
         Optional<Place> placeOptional = placeRepository.findById(deletePlaceDTO.placeId());
 
         if (placeOptional.isEmpty() || placeOptional.get().getStatus().equals(PlaceStatus.DELETED.name())) {
@@ -140,7 +138,6 @@ public class PlaceServiceImpl implements PlaceService {
         Place deletedPlace = placeOptional.get();
         deletedPlace.setStatus(PlaceStatus.DELETED.name());
         deletedPlace.setDeletionDate(LocalDateTime.now().toString());
-        System.out.println(deletePlaceDTO);
         Optional<User> optionalUser = userRepository.findById(deletePlaceDTO.clientId());
         User user = optionalUser.orElse(null);
 
@@ -149,7 +146,8 @@ public class PlaceServiceImpl implements PlaceService {
 
         user.getCreatedPlaces().set(placeIndex, null);
         userRepository.save(user);
-        return placeRepository.save(deletedPlace);
+        placeRepository.save(deletedPlace);
+        return convertToPlaceResponseDTO(deletedPlace);
     }
 
     @Override
@@ -159,7 +157,6 @@ public class PlaceServiceImpl implements PlaceService {
         if (placeOptional.isEmpty() || placeOptional.get().getStatus().equals(PlaceStatus.DELETED.name())) {
             throw new GetPlaceException("El lugar no existe");
         }
-        System.out.println(placeOptional.get());
 
         return convertToPlaceResponseDTO(placeOptional.get());
     }
@@ -168,6 +165,7 @@ public class PlaceServiceImpl implements PlaceService {
     public List<PlaceResponseDTO> getPlacesByCategory(GetPlacesByCategoryDTO getPlacesByCategoryDTO, String token) {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String userId = jws.getPayload().get("id").toString();
+
         searchService.saveSearch(new SaveSearchDTO(userId, getPlacesByCategoryDTO.category(), new Date().toString()));
         List<Place> places = placeRepository.findAllByCategoriesContainingIgnoreCase(getPlacesByCategoryDTO.category());
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
@@ -189,9 +187,8 @@ public class PlaceServiceImpl implements PlaceService {
     }
 
     @Override
-    public List<PlaceResponseDTO> getPlacesMod(String status) throws GetPlaceException {
+    public List<PlaceResponseDTO> getPlacesMod(String status) {
         List<Place> places = placeRepository.findAllByStatus(status);
-
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
@@ -204,40 +201,41 @@ public class PlaceServiceImpl implements PlaceService {
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
-    // TODO: Organizar método, para ingresar una ubicacoión aproximada
+    // TODO: Organizar método, para ingresar una ubicación aproximada
     @Override
     public List<PlaceResponseDTO> getPlacesByLocation(GetPlacesByLocation getPlacesByLocation, String token) {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String userId = jws.getPayload().get("id").toString();
+
         searchService.saveSearch(new SaveSearchDTO(userId, getPlacesByLocation.location(), new Date().toString()));
         List<Place> places = placeRepository.findAllByLocation(getPlacesByLocation.location());
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
-    // TODO: Crear los moderadores el el dataseet para poder hacer la prueba del método
     @Override
     public List<PlaceResponseDTO> getPlacesByModerator(String status, String token) throws GetPlaceException {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String moderatorId = jws.getPayload().get("id").toString();
+
         if (!userRepository.existsById(moderatorId)) throw new GetPlaceException("El moderador no existe");
         List<Place> places = placeRepository.getPlacesByStatusByModerator(status, moderatorId);
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
     @Override
-    public List<PlaceResponseDTO> getPlacesByName(GetPlacesByNameDTO getPlacesByNameDTO, String token) throws GetPlaceException {
+    public List<PlaceResponseDTO> getPlacesByName(GetPlacesByNameDTO getPlacesByNameDTO, String token) {
         List<Place> places = placeRepository.findAllByNameContainingIgnoreCase(getPlacesByNameDTO.name());
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
     @Override
-    public List<PlaceResponseDTO> getPlacesByNamePublic(GetPlacesByNameDTO getPlacesByNameDTO) throws GetPlaceException {
+    public List<PlaceResponseDTO> getPlacesByNamePublic(GetPlacesByNameDTO getPlacesByNameDTO) {
         List<Place> places = placeRepository.findAllByNameContainingIgnoreCase(getPlacesByNameDTO.name());
         return places.stream().map(this::convertToPlaceResponseDTO).toList();
     }
 
     @Override
-    public Place saveFavoritePlace(String placeId, String token) throws FavoritePlaceException {
+    public PlaceResponseDTO saveFavoritePlace(String placeId, String token) throws FavoritePlaceException {
 
         Optional<Place> placeOptional = placeRepository.findById(placeId);
 
@@ -259,19 +257,19 @@ public class PlaceServiceImpl implements PlaceService {
             userRepository.save(user);
         }
 
-        return place;
+        return convertToPlaceResponseDTO(placeOptional.get());
     }
 
-    public Place getFavoritePlace(String idPlace) throws Exception{
-        Optional<Place> placeOptional = placeRepository.findById(idPlace);
+    public PlaceResponseDTO getFavoritePlace(String placeId) throws GetPlaceException{
+        Optional<Place> placeOptional = placeRepository.findById(placeId);
 
         if(placeOptional.isEmpty())
-            throw new Exception("El lugar no existe");
-        return (Place) placeOptional.stream().map(this::convertToPlaceResponseDTO);
+            throw new GetPlaceException("El lugar no existe");
+        return convertToPlaceResponseDTO(placeOptional.get());
     }
 
     @Override
-    public Place deleteFavoritePlace(String placeId, String token) throws FavoritePlaceException {
+    public PlaceResponseDTO deleteFavoritePlace(String placeId, String token) throws FavoritePlaceException {
         Jws<Claims> jws = jwtUtils.parseJwt(token);
         String userId = jws.getPayload().get("id").toString();
         Optional<User> userOptional = userRepository.findById(userId);
@@ -287,7 +285,7 @@ public class PlaceServiceImpl implements PlaceService {
 
         user.getFavoritePlaces().remove(place.getId());
         userRepository.save(user);
-        return place;
+        return convertToPlaceResponseDTO(placeOptional.get());
     }
 
     @Override
@@ -308,7 +306,7 @@ public class PlaceServiceImpl implements PlaceService {
                 .moderatorId(modId)
                 .date(LocalDateTime.now().toString())
                 .action(placeReviewDTO.action())
-                .commentary(placeReviewDTO.commentary())
+                .commentary(placeReviewDTO.comment())
                 .build();
 
         Place updatedPlace = place.get();
@@ -322,24 +320,12 @@ public class PlaceServiceImpl implements PlaceService {
         emailService.sendEmail(new EmailDTO("Nueva revisión en "+updatedPlace.getName(),
                 "Su negocio ha sido revisado:  " +
                         "http://localhost:4200/detalle-negocio/"+updatedPlace.getId(), user.getEmail()));
-        // TODO: validar urls de los email
     }
+    // TODO: validar urls de los email
 
     @Override
     public List<String> getPlaceStatus() {
         return List.of(PlaceStatus.REJECTED.toString(), PlaceStatus.PENDING.toString(), PlaceStatus.DELETED.toString(), PlaceStatus.APPROVED.toString());
-    }
-
-    @Override
-    public List<String> categories() {
-        return Collections.singletonList(List.of(
-                PlaceCategory.CAFE,
-                PlaceCategory.FAST_FOOD,
-                PlaceCategory.HOTEL,
-                PlaceCategory.MUSEUM,
-                PlaceCategory.RESTAURANT,
-                PlaceCategory.OTHER
-        ).toString());
     }
 
     private void loadBannedNames() throws IOException {

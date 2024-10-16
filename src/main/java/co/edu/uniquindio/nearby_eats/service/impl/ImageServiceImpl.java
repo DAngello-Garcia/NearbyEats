@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -20,9 +19,9 @@ public class ImageServiceImpl implements ImageService {
 
     public ImageServiceImpl() {
         Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", "dzdswg3j5");
-        config.put("api_key", "512362591958621");
-        config.put("api_secret", "kwc-ePHWaBdJNXpcORZFxOHRHWQ");
+        config.put("cloud_name", "dhpf3b7gm");
+        config.put("api_key", "341393942961383");
+        config.put("api_secret", "0sroYjqV2qc6Cbs4aKoS2dfD20s");
 
         cloudinary = new Cloudinary(config);
     }

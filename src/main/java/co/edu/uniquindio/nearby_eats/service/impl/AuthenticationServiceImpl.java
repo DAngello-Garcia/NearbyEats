@@ -5,12 +5,9 @@ import co.edu.uniquindio.nearby_eats.dto.request.user.UserLoginDTO;
 import co.edu.uniquindio.nearby_eats.dto.response.TokenDTO;
 import co.edu.uniquindio.nearby_eats.exceptions.authentication.AuthtenticationException;
 import co.edu.uniquindio.nearby_eats.model.docs.User;
-import co.edu.uniquindio.nearby_eats.model.enums.UserRole;
 import co.edu.uniquindio.nearby_eats.repository.UserRepository;
 import co.edu.uniquindio.nearby_eats.service.interfa.AuthenticationService;
 import co.edu.uniquindio.nearby_eats.utils.JwtUtils;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,8 +31,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userOptional.isEmpty()) {
             throw new AuthtenticationException("El email no se encuentra en la base de datos");
         }
-        if(userOptional.get().getRole().equals(UserRole.MODERATOR))
-            throw new AuthtenticationException("Un usuario de tipo moderador debe ir al enlace http://localhost:8080/api/user/login-moderator");
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         User user = userOptional.get();
@@ -55,9 +50,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userOptional.isEmpty()) {
             throw new AuthtenticationException("El email no se encuentra en la base de datos");
         }
-        if(userOptional.get().getRole().equals(UserRole.CLIENT))
-            throw new AuthtenticationException("Un usuario de tipo cliente debe ir al enlace http://localhost:8080/api/user/login-user");
-
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         User user = userOptional.get();
         if( !passwordEncoder.matches(moderatorLoginDTO.password(), user.getPassword()) ) {

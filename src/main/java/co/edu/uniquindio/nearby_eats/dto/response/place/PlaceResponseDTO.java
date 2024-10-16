@@ -11,9 +11,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.List;
 
 public record   PlaceResponseDTO(
-        @NotBlank(message = "id is required") @Length(max = 100) String id,
-        @NotBlank(message = "name is required") @Length(max = 55) String name,
-        @NotBlank(message = "description is required") @Length(max = 288) String description,
+        @NotBlank(message = "id is required") String id,
+        @NotBlank(message = "name is required") String name,
+        @NotBlank(message = "description is required") String description,
         @NotBlank(message = "location is required") Location location,
         @NotBlank(message = "picture is required") List<String> pictures,
         @NotBlank(message = "id is required") @DateTimeFormat List<Schedule> schedule,

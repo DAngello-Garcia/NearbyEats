@@ -75,7 +75,8 @@ public class UserTest {
                 "123456",
                 "juanito123",
                 "Armenia",
-                "Imagen de perfil"
+                "Imagen de perfil",
+                "123456"
         );
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -94,7 +95,6 @@ public class UserTest {
                 .build();
 
         User user1 = userRepository.save(user);
-        System.out.println(user1.getId());
         Assertions.assertNotNull(user1);
     }
 
@@ -107,7 +107,8 @@ public class UserTest {
                 "pedir",
                 "yose.jpg",
                 "Montenegro",
-                "elpepe"
+                "elpepe",
+                "123456"
         );
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -126,7 +127,6 @@ public class UserTest {
                 .build();
 
         User user1 = userRepository.save(user);
-        System.out.println(user1.getId());
         Assertions.assertNotNull(user1);
     }
 
@@ -162,20 +162,18 @@ public class UserTest {
     public void getAllUsersTest() throws GetAllUserException {
         int expectedUsers = 1;
         List<UserInformationDTO> users = userService.getAllUsers();
-        System.out.println(users);
         Assertions.assertEquals(expectedUsers, users.size());
     }
 
     @Test
     public void getUserTest() throws Exception {
         UserInformationDTO user = userService.getUser(userId);
-        System.out.println(user);
         Assertions.assertNotNull(user);
     }
 
     @Test
     public void sendRecoveryEmailTest() throws MessagingException, EmailServiceException {
-        String email = "juand.lopezm@uqvirtual.edu.co";
+        String email = "dangelloa.garcian@uqvirtual.edu.co";
 
         Optional<User> clientOptional = userRepository.findByEmail(email);
 

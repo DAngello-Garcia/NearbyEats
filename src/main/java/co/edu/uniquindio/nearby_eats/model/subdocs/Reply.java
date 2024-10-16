@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class Reply implements Serializable {
+
     private String text;
     private String date;
     private String respondedBy;

@@ -7,9 +7,6 @@ import co.edu.uniquindio.nearby_eats.dto.response.place.PlaceResponseDTO;
 import co.edu.uniquindio.nearby_eats.exceptions.email.EmailServiceException;
 import co.edu.uniquindio.nearby_eats.exceptions.place.*;
 import co.edu.uniquindio.nearby_eats.exceptions.review.ReviewPlaceException;
-import co.edu.uniquindio.nearby_eats.model.docs.Place;
-import co.edu.uniquindio.nearby_eats.model.enums.PlaceCategory;
-import co.edu.uniquindio.nearby_eats.model.subdocs.Location;
 import co.edu.uniquindio.nearby_eats.service.interfa.PlaceService;
 import co.edu.uniquindio.nearby_eats.service.interfa.SearchService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -19,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +54,7 @@ public class PlaceController {
 
     @GetMapping("/get-place/by-category/{category}")
     public ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesByCategory(@PathVariable String category,
-                                                                                  @RequestHeader Map<String, String> headers) throws GetPlaceException {
+                                                                                  @RequestHeader Map<String, String> headers) throws GetPlaceException, SaveSearchException {
         String token = headers.get("authorization").replace("Bearer ", "");
         GetPlacesByCategoryDTO getPlacesByCategoryDTO = new GetPlacesByCategoryDTO(category);
         List<PlaceResponseDTO> places = placeService.getPlacesByCategory(getPlacesByCategoryDTO, token);
@@ -67,7 +63,7 @@ public class PlaceController {
 
     @GetMapping("/get-place/by-name/{name}")
     public ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesByName(@PathVariable String name,
-                                                                              @RequestHeader Map<String, String> headers) throws GetPlaceException {
+                                                                              @RequestHeader Map<String, String> headers) {
         String token = headers.get("authorization").replace("Bearer ", "");
         GetPlacesByNameDTO getPlacesByNameDTO = new GetPlacesByNameDTO(name);
         List<PlaceResponseDTO> places = placeService.getPlacesByName(getPlacesByNameDTO, token);
@@ -76,7 +72,7 @@ public class PlaceController {
 
     @GetMapping("/get-place/by-status")
     public ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesByStatus(@RequestParam String status,
-                                                                                @RequestHeader Map<String, String> headers) throws GetPlaceException {
+                                                                                @RequestHeader Map<String, String> headers) throws GetPlaceException, SaveSearchException {
         String token = headers.get("authorization").replace("Bearer ", "");
         GetPlacesByStatusByClientDTO getPlacesByStatusByClientDTO = new GetPlacesByStatusByClientDTO(status);
         List<PlaceResponseDTO> places = placeService.getPlacesByStatus(getPlacesByStatusByClientDTO, token);
@@ -84,7 +80,7 @@ public class PlaceController {
     }
 
     @GetMapping("/get-place/by-status-mod/{status}")
-    public ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesMod(@PathVariable String status) throws GetPlaceException {
+    public ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesMod(@PathVariable String status) {
         List<PlaceResponseDTO> places = placeService.getPlacesMod(status);
         return ResponseEntity.ok().body(new MessageDTO<>(false, places));
     }
@@ -104,7 +100,7 @@ public class PlaceController {
 
     @GetMapping("/get-place/by-location")
     private ResponseEntity<MessageDTO<List<PlaceResponseDTO>>> getPlacesByLocation(@RequestParam String location,
-                                                                                   @RequestHeader Map<String, String> headers) throws GetPlaceException {
+                                                                                   @RequestHeader Map<String, String> headers) throws GetPlaceException, SaveSearchException {
         String token = headers.get("authorization").replace("Bearer ", "");
         GetPlacesByLocation getPlacesByLocation = new GetPlacesByLocation(location);
         List<PlaceResponseDTO> places = placeService.getPlacesByLocation(getPlacesByLocation, token);
@@ -126,22 +122,22 @@ public class PlaceController {
     }
 
     @GetMapping("/save/favorite/place/{placeId}")
-    public ResponseEntity<MessageDTO<Place>> saveFavoritePlace(@Valid @PathVariable String placeId, @RequestHeader Map<String, String> headers) throws FavoritePlaceException {
+    public ResponseEntity<MessageDTO<PlaceResponseDTO>> saveFavoritePlace(@Valid @PathVariable String placeId, @RequestHeader Map<String, String> headers) throws FavoritePlaceException {
         String token = headers.get("authorization").replace("Bearer ", "");
-        placeService.saveFavoritePlace(placeId, token);
-        return ResponseEntity.ok().body(new MessageDTO<>(false, placeService.saveFavoritePlace(placeId, token)));
+        PlaceResponseDTO savedFavoritePlace = placeService.saveFavoritePlace(placeId, token);
+        return ResponseEntity.ok().body(new MessageDTO<>(false, savedFavoritePlace));
     }
 
     @GetMapping("/delete/favorite/place/{placeId}")
-    public ResponseEntity<MessageDTO<Place>> deleteFavoritePlace(@Valid @PathVariable String placeId, @RequestHeader Map<String, String> headers) throws FavoritePlaceException {
+    public ResponseEntity<MessageDTO<PlaceResponseDTO>> deleteFavoritePlace(@Valid @PathVariable String placeId, @RequestHeader Map<String, String> headers) throws FavoritePlaceException {
         String token = headers.get("authorization").replace("Bearer ", "");
-        placeService.deleteFavoritePlace(placeId, token);
-        return ResponseEntity.ok().body(new MessageDTO<>(false, placeService.deleteFavoritePlace(placeId, token)));
+        PlaceResponseDTO deleteFavoritePlace = placeService.deleteFavoritePlace(placeId, token);
+        return ResponseEntity.ok().body(new MessageDTO<>(false, deleteFavoritePlace));
     }
 
     @GetMapping("/get-favorite-place")
-    public ResponseEntity<MessageDTO<Place>> getfavoritePlace(@Valid @RequestBody String idPlace) throws Exception {
-        placeService.getFavoritePlace(idPlace);
-        return ResponseEntity.ok().body(new MessageDTO<>(false, placeService.getFavoritePlace(idPlace)));
+    public ResponseEntity<MessageDTO<PlaceResponseDTO>> getfavoritePlace(@Valid @RequestBody String idPlace) throws Exception {
+        PlaceResponseDTO favoritePlace = placeService.getFavoritePlace(idPlace);
+        return ResponseEntity.ok().body(new MessageDTO<>(false, favoritePlace));
     }
 }

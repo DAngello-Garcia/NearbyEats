@@ -23,26 +23,18 @@ public class User implements Serializable {
     private String id;
 
     private String firstName;
-
     private String lastName;
-
     private String profilePicture;
-
     private String nickname;
-
     private String email;
 
     @ToString.Exclude
     private String password;
 
     private String city;
-
     private String role;
-
     private Boolean isActive;
-
     private List<String> favoritePlaces;
-
     private List<String> createdPlaces;
 
     public User() {

@@ -22,8 +22,6 @@ public class Search implements Serializable {
     private String id;
 
     private String user;
-
     private String query;
-
     private String date;
 }

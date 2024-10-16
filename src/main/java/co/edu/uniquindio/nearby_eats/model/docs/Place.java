@@ -25,23 +25,14 @@ public class Place implements Serializable {
     private String id;
 
     private String name;
-
     private String description;
-
     private List<String> pictures;
-
     private List<Schedule> schedules;
-
     private List<String> phones;
-
     private List<String> categories;
-
     private Location location;
-
     private String status;
-
     private String createdBy;
-
     private List<Review> reviews;
     private String creationDate;
     private String deletionDate;
